@@ -1,0 +1,336 @@
+       IDENTIFICATION DIVISION.                                                 
+       PROGRAM-ID. DCJA6PGE.                                                    
+       AUTHOR. KODY BEATTIE.                                                    
+                                                                                
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
+       DATA DIVISION.                                                           
+       WORKING-STORAGE SECTION.                                                 
+       COPY 'CHECK'.                                                            
+       01 WS-COURSE-CODES.                                                      
+           05 CC-COURSE PIC X(8) OCCURS 5 TIMES.                                
+       01 WS-NAME.                                                              
+           05 NM-CHAR PIC X OCCURS 20 TIMES.                                    
+                                                                                
+                                                                                
+       01 WS-DUP-CC-FOUND PIC 9 VALUE 0.                                        
+       01 WS-GOOD-LETS PIC 9(2) VALUE 0.                                        
+       01 X PIC 9(2) VALUE 0.                                                   
+       01 Y PIC 9(2) VALUE 0.                                                   
+       LINKAGE SECTION.                                                         
+                                                                                
+       01 DFHCOMMAREA PIC X(207).                                               
+                                                                                
+       PROCEDURE DIVISION.                                                      
+                                                                                
+       100-MAIN-LOGIC.                                                          
+                                                                                
+           MOVE DFHCOMMAREA TO CHECK-RECORD.                                    
+           MOVE LOW-VALUE TO DFHCOMMAREA.                                       
+           PERFORM 190-VALIDATION.                                              
+           PERFORM 300-PASS-BACK.                                               
+                                                                                
+                                                                                
+       190-VALIDATION.                                                          
+           PERFORM 200-VALIDATE-CHK-NUMBER.                                     
+           PERFORM 219-VALIDATE-COURSE-ENTERED.                                 
+           PERFORM 265-CHECK-DUP-CODES.                                         
+           PERFORM 210-VALIDATE-CHK-NAME.                                       
+           PERFORM 270-VALIDATE-ADDRESS.                                        
+           PERFORM 280-VALIDATE-POSTAL.                                         
+           PERFORM 290-VALIDATE-PHONE.                                          
+                                                                                
+       200-VALIDATE-CHK-NUMBER.                                                 
+           IF CHK-NUMBERL < 7 THEN                                              
+              MOVE 'STUDENT NUMBER MUST BE 7 CHARACTERS LONG'                   
+                 TO ERR-MSG                                                     
+              MOVE 1 TO ERR-FIELD                                               
+              PERFORM 300-PASS-BACK                                             
+           ELSE                                                                 
+              IF CHK-NUMBER IS NOT NUMERIC THEN                                 
+                 MOVE 'STUDENT NUMBER MUST BE NUMERIC' TO ERR-MSG               
+                 MOVE 1 TO ERR-FIELD                                            
+                 PERFORM 300-PASS-BACK                                          
+              END-IF                                                            
+           END-IF.                                                              
+                                                                                
+       210-VALIDATE-CHK-NAME.                                                   
+           IF CHK-NAMEL = 0 THEN                                                
+              MOVE 'STUDENT NAME MUST BE ENTERED.'                              
+                  TO ERR-MSG                                                    
+              MOVE 7 TO ERR-FIELD                                               
+              PERFORM 300-PASS-BACK                                             
+           ELSE                                                                 
+              PERFORM 211-VALIDATE-NAME-CHARS                                   
+           END-IF.                                                              
+                                                                                
+       211-VALIDATE-NAME-CHARS.                                                 
+           MOVE CHK-NAME TO WS-NAME.                                            
+           PERFORM VARYING X FROM 1 BY 1 UNTIL X > CHK-NAMEL                    
+               IF (X = 1) THEN                                                  
+                   IF (NM-CHAR(X) IS ALPHABETIC-UPPER                           
+                       AND NM-CHAR(X) NOT EQUAL SPACES                          
+                       AND NM-CHAR(X) NOT EQUAL LOW-VALUES) THEN                
+                       COMPUTE WS-GOOD-LETS = WS-GOOD-LETS + 1                  
+                   END-IF                                                       
+               ELSE                                                             
+                   IF (WS-GOOD-LETS NOT EQUAL 0                                 
+                       AND (NM-CHAR(X) IS ALPHABETIC-LOWER                      
+                       OR  NM-CHAR(X) IS ALPHABETIC-UPPER)                      
+                       AND NM-CHAR(X) NOT EQUAL LOW-VALUES                      
+                       AND NM-CHAR(X) NOT EQUAL SPACES) THEN                    
+                           COMPUTE WS-GOOD-LETS = WS-GOOD-LETS + 1              
+                   END-IF                                                       
+               END-IF                                                           
+           END-PERFORM.                                                         
+           IF WS-GOOD-LETS < 4 THEN                                             
+               IF WS-GOOD-LETS IS EQUAL TO 0 THEN                               
+                   MOVE 'FIRST LETTER IN NAME MUST BE A CAPITAL.'               
+                       TO ERR-MSG                                               
+               ELSE                                                             
+                   MOVE 'MUST BE AT LEAST 4 LETTERS IN NAME.'                   
+                       TO ERR-MSG                                               
+               END-IF                                                           
+               MOVE 7 TO ERR-FIELD                                              
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+                                                                                
+       219-VALIDATE-COURSE-ENTERED.                                             
+           IF CHK-COURSE-1L = 0                                                 
+               AND CHK-COURSE-2L = 0                                            
+               AND CHK-COURSE-3L = 0                                            
+               AND CHK-COURSE-4L = 0                                            
+               AND CHK-COURSE-5L = 0 THEN                                       
+                 MOVE 'PLEASE ENTER AT LEAST ONE COURSE CODE' TO ERR-MSG        
+                 MOVE 2 TO ERR-FIELD                                            
+               PERFORM 300-PASS-BACK                                            
+           ELSE                                                                 
+               PERFORM 220-VALIDATE-COURSE-1                                    
+               PERFORM 230-VALIDATE-COURSE-2                                    
+               PERFORM 240-VALIDATE-COURSE-3                                    
+               PERFORM 250-VALIDATE-COURSE-4                                    
+               PERFORM 260-VALIDATE-COURSE-5                                    
+           END-IF.                                                              
+                                                                                
+       220-VALIDATE-COURSE-1.                                                   
+           IF (CHK-COURSE-1L > 0) THEN                                          
+               IF (CHK-COURSE-1(1:4) IS NOT ALPHABETIC) THEN                    
+                   MOVE 'CHARS 1-4 IN COURSE CODE 1 NOT ALPHA.'                 
+                       TO ERR-MSG                                               
+                   MOVE 2 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-1 TO CC-COURSE(1)                            
+               END-IF                                                           
+               IF (CHK-COURSE-1(5:4) IS NOT NUMERIC) THEN                       
+                   MOVE 'CHARS 5-8 IN COURSE CODE 1 NOT NUM.'                   
+                       TO ERR-MSG                                               
+                   MOVE 2 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-1 TO CC-COURSE(1)                            
+               END-IF                                                           
+           ELSE                                                                 
+               MOVE CHK-COURSE-1 TO CC-COURSE(1)                                
+           END-IF.                                                              
+                                                                                
+       230-VALIDATE-COURSE-2.                                                   
+           IF (CHK-COURSE-2L > 0) THEN                                          
+               IF (CHK-COURSE-2(1:4) IS NOT ALPHABETIC) THEN                    
+                   MOVE 'CHARS 1-4 IN COURSE CODE 2 NOT ALPHA.'                 
+                       TO ERR-MSG                                               
+                   MOVE 3 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-2 TO CC-COURSE(2)                            
+               END-IF                                                           
+               IF (CHK-COURSE-2(5:4) IS NOT NUMERIC) THEN                       
+                   MOVE 'CHARS 5-8 IN COURSE CODE 2 NOT NUM.'                   
+                       TO ERR-MSG                                               
+                   MOVE 3 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-2 TO CC-COURSE(2)                            
+               END-IF                                                           
+           ELSE                                                                 
+               MOVE CHK-COURSE-2 TO CC-COURSE(2)                                
+           END-IF.                                                              
+                                                                                
+       240-VALIDATE-COURSE-3.                                                   
+           IF (CHK-COURSE-3L > 0) THEN                                          
+               IF (CHK-COURSE-3(1:4) IS NOT ALPHABETIC) THEN                    
+                   MOVE 'CHARS 1-4 IN COURSE CODE 3 NOT ALPHA.'                 
+                       TO ERR-MSG                                               
+                   MOVE 4 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-3 TO CC-COURSE(3)                            
+               END-IF                                                           
+               IF (CHK-COURSE-3(5:4) IS NOT NUMERIC) THEN                       
+                   MOVE 'CHARS 5-8 IN COURSE CODE 3 NOT NUM.'                   
+                       TO ERR-MSG                                               
+                   MOVE 4 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-3 TO CC-COURSE(3)                            
+               END-IF                                                           
+           ELSE                                                                 
+               MOVE CHK-COURSE-3 TO CC-COURSE(3)                                
+           END-IF.                                                              
+                                                                                
+       250-VALIDATE-COURSE-4.                                                   
+           IF (CHK-COURSE-4L > 0) THEN                                          
+               IF (CHK-COURSE-4(1:4) IS NOT ALPHABETIC) THEN                    
+                   MOVE 'CHARS 1-4 IN COURSE CODE 4 NOT ALPHA.'                 
+                       TO ERR-MSG                                               
+                   MOVE 5 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-4 TO CC-COURSE(4)                            
+               END-IF                                                           
+               IF (CHK-COURSE-4(5:4) IS NOT NUMERIC) THEN                       
+                   MOVE 'CHARS 5-8 IN COURSE CODE 4 NOT NUM.'                   
+                       TO ERR-MSG                                               
+                   MOVE 5 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-4 TO CC-COURSE(4)                            
+               END-IF                                                           
+           ELSE                                                                 
+               MOVE CHK-COURSE-4 TO CC-COURSE(4)                                
+           END-IF.                                                              
+                                                                                
+       260-VALIDATE-COURSE-5.                                                   
+           IF (CHK-COURSE-5L > 0) THEN                                          
+               IF (CHK-COURSE-5(1:4) IS NOT ALPHABETIC) THEN                    
+                   MOVE 'CHARS 1-4 IN COURSE CODE 5 NOT ALPHA.'                 
+                       TO ERR-MSG                                               
+                   MOVE 6 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-5 TO CC-COURSE(5)                            
+               END-IF                                                           
+               IF (CHK-COURSE-5(5:4) IS NOT NUMERIC) THEN                       
+                   MOVE 'CHARS 5-8 IN COURSE CODE 5 NOT NUM.'                   
+                       TO ERR-MSG                                               
+                   MOVE 6 TO ERR-FIELD                                          
+                   PERFORM 300-PASS-BACK                                        
+               ELSE                                                             
+                   MOVE CHK-COURSE-5 TO CC-COURSE(5)                            
+               END-IF                                                           
+           ELSE                                                                 
+               MOVE CHK-COURSE-5 TO CC-COURSE(5)                                
+           END-IF.                                                              
+                                                                                
+       265-CHECK-DUP-CODES.                                                     
+           PERFORM VARYING X FROM 1 BY 1 UNTIL (X > 4)                          
+               COMPUTE Y = X + 1                                                
+               PERFORM VARYING Y FROM Y BY 1 UNTIL (Y > 5)                      
+                   IF ((CC-COURSE(X)(1:8) NOT EQUAL SPACES                      
+                       AND CC-COURSE(X)(1:8) NOT EQUAL LOW-VALUES)              
+                       AND (CC-COURSE(Y)(1:8) NOT EQUAL SPACES                  
+                       AND CC-COURSE(Y)(1:8) NOT EQUAL LOW-VALUES)) THEN        
+                       IF (CC-COURSE(X)(1:8) EQUAL CC-COURSE(Y)(1:8))           
+                       THEN                                                     
+                                                                                
+                       MOVE 'DUPLICATE COURSE CODES DETECTED' TO ERR-MSG        
+                                                                                
+                       COMPUTE ERR-FIELD = X + 1                                
+                       PERFORM 300-PASS-BACK                                    
+                       END-IF                                                   
+                   END-IF                                                       
+               END-PERFORM                                                      
+           END-PERFORM.                                                         
+                                                                                
+       270-VALIDATE-ADDRESS.                                                    
+           IF CHK-ADDRESS-1L = 0                                                
+              OR CHK-ADDRESS-1 EQUAL TO SPACES THEN                             
+               MOVE "FILL IN YOUR ADDRESS ON LINES 1 AND 2" TO ERR-MSG          
+               MOVE 8 TO ERR-FIELD                                              
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-ADDRESS-2L = 0                                                
+              OR CHK-ADDRESS-2 EQUAL TO SPACES THEN                             
+               MOVE "FILL IN YOUR ADDRESS ON LINES 1 AND 2" TO ERR-MSG          
+               MOVE 9 TO ERR-FIELD                                              
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-ADDRESS-3 EQUAL TO SPACES THEN                                
+               MOVE "ADDRESS LINE 3 CANNOT EQUAL SPACES" TO ERR-MSG             
+               MOVE 10 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+                                                                                
+       280-VALIDATE-POSTAL.                                                     
+           IF  CHK-POSTAL-1(1:1) IS NOT ALPHABETIC                              
+               OR CHK-POSTAL-1(3:1) IS NOT ALPHABETIC                           
+               OR CHK-POSTAL-1(2:1) IS NOT NUMERIC THEN                         
+               MOVE 'ENTER VALID POST CODE - X9X 9X9.' TO ERR-MSG               
+               MOVE 11 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF  CHK-POSTAL-2(2:1) IS NOT ALPHABETIC                              
+               OR CHK-POSTAL-2(1:1) IS NOT NUMERIC                              
+               OR CHK-POSTAL-2(3:1) IS NOT NUMERIC THEN                         
+               MOVE 'ENTER VALID POST CODE - X9X 9X9.' TO ERR-MSG               
+               MOVE 12 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+                                                                                
+       290-VALIDATE-PHONE.                                                      
+           IF CHK-PHONE-1L < 3 THEN                                             
+               MOVE 'PHONE 1 IS NOT 3 DIGITS LONG.' TO ERR-MSG                  
+               MOVE 13 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-PHONE-1 EQUAL SPACES THEN                                     
+               MOVE 'PHONE 1 IS EMPTY.' TO ERR-MSG                              
+               MOVE 13 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-PHONE-1 IS NOT NUMERIC THEN                                   
+               MOVE 'PHONE 1 IS NOT NUMERIC.' TO ERR-MSG                        
+               MOVE 13 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-PHONE-2L < 3 THEN                                             
+               MOVE 'PHONE 2 IS NOT 3 DIGITS LONG.' TO ERR-MSG                  
+               MOVE 14 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-PHONE-2 EQUAL SPACES THEN                                     
+               MOVE 'PHONE 2 IS EMPTY.' TO ERR-MSG                              
+               MOVE 14 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-PHONE-2 IS NOT NUMERIC THEN                                   
+               MOVE 'PHONE 2 IS NOT NUMERIC.' TO ERR-MSG                        
+               MOVE 14 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-PHONE-3L < 4 THEN                                             
+               MOVE 'PHONE 3 IS NOT 4 DIGITS LONG.' TO ERR-MSG                  
+               MOVE 15 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-PHONE-3 EQUAL SPACES THEN                                     
+               MOVE 'PHONE 3 IS EMPTY.' TO ERR-MSG                              
+               MOVE 15 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+           IF CHK-PHONE-3 IS NOT NUMERIC THEN                                   
+               MOVE 'PHONE 3 IS NOT NUMERIC.' TO ERR-MSG                        
+               MOVE 15 TO ERR-FIELD                                             
+               PERFORM 300-PASS-BACK                                            
+           END-IF.                                                              
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+       300-PASS-BACK.                                                           
+           MOVE CHECK-RECORD TO DFHCOMMAREA.                                    
+           EXEC CICS RETURN END-EXEC.                                           
+                                                                                
+       END PROGRAM DCJA6PGE.                                                    

@@ -1,0 +1,47 @@
+*REPLACE XXX WITH THE LAST 3 CHARACTERS OF YOUR USER ID                         
+DCJA6MB  DFHMSD TYPE=&SYSPARM,MODE=INOUT,TERM=ALL,                     *        
+               LANG=COBOL,TIOAPFX=YES,CTRL=FREEKB,                     *        
+               MAPATTS=(COLOR,HILIGHT),DSATTS=(COLOR,HILIGHT)                   
+MAP1     DFHMDI SIZE=(24,80),LINE=1,COLUMN=1                                    
+         DFHMDF POS=(2,3),LENGTH=20,INITIAL='KODY',                    *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+         DFHMDF POS=(3,3),LENGTH=20,INITIAL='BEATTIE',                 *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+TITLE    DFHMDF POS=(2,26),LENGTH=28,                                  *        
+               INITIAL='B R O W S E  S T U D E N T S',                 *        
+               ATTRB=(ASKIP,NORM),COLOR=NEUTRAL                                 
+         DFHMDF POS=(3,26),LENGTH=28,                                  *        
+               INITIAL='============================',                 *        
+               ATTRB=(ASKIP,NORM),COLOR=NEUTRAL                                 
+         DFHMDF POS=(5,25),LENGTH=13,INITIAL='STUDENT NAME:',          *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+STUNAME  DFHMDF POS=(5,39),LENGTH=20,                                  *        
+               ATTRB=(UNPROT,NORM,IC,FSET),HILIGHT=OFF,COLOR=NEUTRAL            
+         DFHMDF POS=(5,60),LENGTH=0,                                   *        
+               ATTRB=(ASKIP)                                                    
+         DFHMDF POS=(7,21),LENGTH=6,INITIAL='NUMBER',                  *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+         DFHMDF POS=(7,29),LENGTH=4,INITIAL='NAME',                    *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+         DFHMDF POS=(7,54),LENGTH=7,INITIAL='PHONE #',                 *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+LINES    DFHMDF POS=(8,18),LENGTH=79,ATTRB=(ASKIP,FSET),OCCURS=10               
+MSG      DFHMDF POS=(20,10),LENGTH=60,ATTRB=(ASKIP)                             
+         DFHMDF POS=(22,38),LENGTH=12,INITIAL='TRANSFER TO:',          *        
+               ATTRB=(ASKIP,NORM),COLOR=NEUTRAL                                 
+TRANSTO  DFHMDF POS=(22,51),LENGTH=2,                                  *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(22,54),LENGTH=0,                                  *        
+               ATTRB=(ASKIP)                                                    
+         DFHMDF POS=(23,1),LENGTH=12,INITIAL='PF2-TRANSFER',           *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+         DFHMDF POS=(23,17),LENGTH=13,INITIAL='PF7-PREV PAGE',         *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+         DFHMDF POS=(24,1),LENGTH=9,INITIAL='PF4-RESET',               *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+         DFHMDF POS=(24,17),LENGTH=13,INITIAL='PF8-NEXT PAGE',         *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+         DFHMDF POS=(24,70),LENGTH=8,INITIAL='PF9-EXIT',               *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+DCJA6MB  DFHMSD TYPE=FINAL                                                      
+                 END                                                            

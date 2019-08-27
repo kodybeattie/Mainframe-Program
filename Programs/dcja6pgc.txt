@@ -1,0 +1,166 @@
+       IDENTIFICATION DIVISION.                                                 
+       PROGRAM-ID. DCJA6PGC.                                                    
+       AUTHOR. KODY BEATTIE.                                                    
+                                                                                
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
+       DATA DIVISION.                                                           
+       WORKING-STORAGE SECTION.                                                 
+                                                                                
+      * COPY INQUIRY MAP LAYOUT                                                 
+       COPY 'DCJA6MC'.                                                          
+                                                                                
+      * COPY ACCTFILE RECORD LAYOUT                                             
+       COPY 'CHECK'.                                                            
+       COPY 'STUREC'.                                                           
+       01 WS-MSG PIC X(50).                                                     
+       01 WS-COMMAREA      PIC X VALUE 'X'.                                     
+       01 WS-COMMAREA-LEN  PIC S9(4) COMP VALUE 1.                              
+       LINKAGE SECTION.                                                         
+       01 DFHCOMMAREA PIC X(207).                                               
+       PROCEDURE DIVISION.                                                      
+                                                                                
+       000-START-LOGIC.                                                         
+      * UPON UNSUCCESSFUL MAP RECEIVE, ASSUME THIS IS THE INITIAL RUN           
+                                                                                
+           EXEC CICS HANDLE CONDITION                                           
+                MAPFAIL(100-FIRST-TIME)                                         
+                DUPREC(300-DUPREC)                                              
+           END-EXEC.                                                            
+            EXEC CICS HANDLE AID                                                
+                PF4(100-FIRST-TIME)                                             
+                PF9(999-EXIT)                                                   
+            END-EXEC.                                                           
+           IF (EIBCALEN = 1) THEN                                               
+                GO TO 100-FIRST-TIME                                            
+           END-IF.                                                              
+                                                                                
+      * ATTEMPT TO RECEIVE MAP FROM TERMINAL                                    
+           EXEC CICS RECEIVE MAP('MAP1') MAPSET('DCJA6MC') END-EXEC.            
+                                                                                
+      * RECEIVE WAS SUCCESSFUL, PROCEED WITH MAIN PROCESSING                    
+           GO TO 200-MAIN-LOGIC.                                                
+                                                                                
+       100-FIRST-TIME.                                                          
+           MOVE LOW-VALUES TO MAP1O.                                            
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MC') ERASE END-EXEC.         
+           EXEC CICS RETURN TRANSID('JA62') END-EXEC.                           
+                                                                                
+       200-MAIN-LOGIC.                                                          
+                                                                                
+           IF (STUNUMI = 'XXXXXXX') THEN                                        
+               GO TO 999-EXIT                                                   
+           ELSE                                                                 
+                                                                                
+               MOVE STUNUMI TO CHK-NUMBER                                       
+               MOVE STUNAMEI TO CHK-NAME                                        
+               MOVE COURSE1I TO CHK-COURSE-1                                    
+               MOVE COURSE2I TO CHK-COURSE-2                                    
+               MOVE COURSE3I TO CHK-COURSE-3                                    
+               MOVE COURSE4I TO CHK-COURSE-4                                    
+               MOVE COURSE5I TO CHK-COURSE-5                                    
+               MOVE ADDLINE1I TO CHK-ADDRESS-1                                  
+               MOVE ADDLINE2I TO CHK-ADDRESS-2                                  
+               MOVE ADDLINE3I TO CHK-ADDRESS-3                                  
+               MOVE POST1I TO CHK-POSTAL-1                                      
+               MOVE POST2I TO CHK-POSTAL-2                                      
+               MOVE PHONE1I TO CHK-PHONE-1                                      
+               MOVE PHONE2I TO CHK-PHONE-2                                      
+               MOVE PHONE3I TO CHK-PHONE-3                                      
+               MOVE STUNUML TO CHK-NUMBERL                                      
+               MOVE STUNAMEL TO CHK-NAMEL                                       
+               MOVE COURSE1L TO CHK-COURSE-1L                                   
+               MOVE COURSE2L TO CHK-COURSE-2L                                   
+               MOVE COURSE3L TO CHK-COURSE-3L                                   
+               MOVE COURSE4L TO CHK-COURSE-4L                                   
+               MOVE COURSE5L TO CHK-COURSE-5L                                   
+               MOVE ADDLINE1L TO CHK-ADDRESS-1L                                 
+               MOVE ADDLINE2L TO CHK-ADDRESS-2L                                 
+               MOVE POST1L TO CHK-POSTAL-1L                                     
+               MOVE POST2L TO CHK-POSTAL-2L                                     
+               MOVE PHONE1L TO CHK-PHONE-1L                                     
+               MOVE PHONE2L TO CHK-PHONE-2L                                     
+               MOVE PHONE3L TO CHK-PHONE-3L                                     
+                                                                                
+               EXEC CICS LINK                                                   
+                   PROGRAM('DCJA6PGE')                                          
+                   COMMAREA(CHECK-RECORD)                                       
+                                                                                
+               END-EXEC                                                         
+                                                                                
+                                                                                
+               IF (ERR-FIELD NOT EQUAL 0) THEN                                  
+                   GO TO 400-ERROR-RETURN                                       
+                                                                                
+                                                                                
+               ELSE                                                             
+                   GO TO 600-WRITE-RECORD                                       
+               END-IF                                                           
+           END-IF.                                                              
+                                                                                
+       300-DUPREC.                                                              
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE 'STUDENT ALREADY EXISTS. ENTER NEW STU NUMBER ' TO MSGO.        
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MC') END-EXEC.               
+           EXEC CICS RETURN TRANSID('JA62') END-EXEC.                           
+                                                                                
+       400-ERROR-RETURN.                                                        
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE ERR-MSG TO MSGO.                                                
+           PERFORM 500-MOVE-CURSOR.                                             
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MC') CURSOR END-EXEC.        
+           EXEC CICS RETURN TRANSID('JA62') END-EXEC.                           
+                                                                                
+       500-MOVE-CURSOR.                                                         
+           IF (ERR-FIELD = 1) THEN MOVE -1 TO STUNUML END-IF.                   
+           IF (ERR-FIELD = 2) THEN MOVE -1 TO COURSE1L END-IF.                  
+           IF (ERR-FIELD = 3) THEN MOVE -1 TO COURSE2L END-IF.                  
+           IF (ERR-FIELD = 4) THEN MOVE -1 TO COURSE3L END-IF.                  
+           IF (ERR-FIELD = 5) THEN MOVE -1 TO COURSE4L END-IF.                  
+           IF (ERR-FIELD = 6) THEN MOVE -1 TO COURSE5L END-IF.                  
+           IF (ERR-FIELD = 7) THEN MOVE -1 TO STUNAMEL END-IF.                  
+           IF (ERR-FIELD = 8) THEN MOVE -1 TO ADDLINE1L END-IF.                 
+           IF (ERR-FIELD = 9) THEN MOVE -1 TO ADDLINE2L END-IF.                 
+           IF (ERR-FIELD = 10) THEN MOVE -1 TO ADDLINE3L END-IF.                
+           IF (ERR-FIELD = 11) THEN MOVE -1 TO POST1L END-IF.                   
+           IF (ERR-FIELD = 12) THEN MOVE -1 TO POST2L END-IF.                   
+           IF (ERR-FIELD = 13) THEN MOVE -1 TO PHONE1L END-IF.                  
+           IF (ERR-FIELD = 14) THEN MOVE -1 TO PHONE2L END-IF.                  
+           IF (ERR-FIELD = 15) THEN MOVE -1 TO PHONE3L END-IF.                  
+                                                                                
+       600-WRITE-RECORD.                                                        
+           MOVE STUNUMI TO STU-NUMBER.                                          
+           MOVE STUNAMEI TO STU-NAME.                                           
+           MOVE COURSE1I TO STU-COURSE-1.                                       
+           MOVE COURSE2I TO STU-COURSE-2.                                       
+           MOVE COURSE3I TO STU-COURSE-3.                                       
+           MOVE COURSE4I TO STU-COURSE-4.                                       
+           MOVE COURSE5I TO STU-COURSE-5.                                       
+           MOVE ADDLINE1I TO STU-ADDRESS-1.                                     
+           MOVE ADDLINE2I TO STU-ADDRESS-2.                                     
+           MOVE ADDLINE3I TO STU-ADDRESS-3.                                     
+           MOVE POST1I TO STU-POSTAL-1.                                         
+           MOVE POST2I TO STU-POSTAL-2.                                         
+           MOVE PHONE1I TO STU-PHONE-1.                                         
+           MOVE PHONE2I TO STU-PHONE-2.                                         
+           MOVE PHONE3I TO STU-PHONE-3.                                         
+           EXEC CICS WRITE                                                      
+               FILE('STUFILE')                                                  
+               FROM(STUFILE-RECORD)                                             
+               RIDFLD(STU-KEY)                                                  
+           END-EXEC.                                                            
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE "RECORD SUCCESSFULLY WRITTEN!" TO MSGO.                         
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MC') ERASE END-EXEC.         
+           EXEC CICS RETURN TRANSID('JA62') END-EXEC.                           
+                                                                                
+       999-EXIT.                                                                
+           EXEC CICS XCTL                                                       
+                PROGRAM('DCJA6PGM')                                             
+                COMMAREA(WS-COMMAREA)                                           
+                LENGTH(WS-COMMAREA-LEN)                                         
+           END-EXEC.                                                            
+                                                                                
+                                                                                
+       END PROGRAM DCJA6PGC.                                                    
+                                                                                

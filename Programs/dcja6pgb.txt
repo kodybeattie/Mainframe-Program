@@ -1,0 +1,379 @@
+       IDENTIFICATION DIVISION.                                                 
+       PROGRAM-ID. DCJA6PGB.                                                    
+       AUTHOR. KODY BEATTIE.                                                    
+                                                                                
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
+                                                                                
+       DATA DIVISION.                                                           
+       WORKING-STORAGE SECTION.                                                 
+                                                                                
+      * COPY BROWSE MAP LAYOUT                                                  
+       COPY 'DCJA6MB'.                                                          
+                                                                                
+      * COPY ACCTFILE RECORD LAYOUT                                             
+                                                                                
+       COPY 'STUREC'.                                                           
+       01 WS-COMMAREA      PIC X VALUE 'X'.                                     
+       01 WS-COMMAREA-LEN  PIC S9(4) COMP VALUE 1.                              
+       01 WS-LINE-COUNT          PIC 99 VALUE 0.                                
+       01 WS-COUNT               PIC 9 VALUE 0.                                 
+       01 WS-STATUS              PIC S9(4) COMP.                                
+       01 WS-COMM-LEN            PIC S9(4) COMP VALUE 7.                        
+       01 WS-DATA.                                                              
+           05 WS-FLAGS.                                                         
+               10 WS-GOOD-SEARCH     PIC 9 VALUE 0.                             
+               10 WS-SOF-FLAG        PIC 9 VALUE 0.                             
+               10 WS-EOF-FLAG        PIC 9 VALUE 0.                             
+           05 WS-TABLE.                                                         
+               06 WS-DATA-LINE OCCURS 10 TIMES.                                 
+                   10 WDC-LINE       PIC 9(2) VALUE 0.                          
+                   10 FILLER         PIC X VALUE SPACES.                        
+                   10 WDC-NUM        PIC 9(7).                                  
+                   10 FILLER         PIC X VALUE SPACES.                        
+                   10 WDC-NAME       PIC X(20).                                 
+                   10 FILLER         PIC X(5) VALUE SPACES.                     
+                   10 WDC-PHONE      PIC X(10).                                 
+       01 WS-INDEX               PIC 9(2) VALUE 0.                              
+       LINKAGE SECTION.                                                         
+                                                                                
+       01 DFHCOMMAREA PIC X(485).                                               
+                                                                                
+       PROCEDURE DIVISION.                                                      
+                                                                                
+       000-START-LOGIC.                                                         
+           MOVE DFHCOMMAREA(1:3) TO WS-FLAGS.                                   
+           MOVE DFHCOMMAREA(4:) TO WS-TABLE.                                    
+           EXEC CICS HANDLE AID                                                 
+                PF2(400-TRANSFER)                                               
+                PF4(999-SEARCH-RETURN)                                          
+                PF8(211-NEXT-PAGE)                                              
+                PF7(221-PREV-PAGE)                                              
+                PF9(999-EXIT-RETURN)                                            
+           END-EXEC.                                                            
+           IF (EIBCALEN = 1) THEN                                               
+                GO TO 999-SEARCH-RETURN                                         
+           END-IF.                                                              
+           EXEC CICS HANDLE CONDITION                                           
+      * UPON UNSUCCESSFUL MAP RECEIVE, ASSUME THIS IS THE INITIAL RUN           
+                MAPFAIL(999-SEARCH-RETURN)                                      
+                NOTFND(300-NOTFND)                                              
+           END-EXEC.                                                            
+                                                                                
+      * TODO: HANDLE dupkey                                                     
+                                                                                
+           EXEC CICS IGNORE CONDITION DUPKEY END-EXEC.                          
+           MOVE "PLEASE ENTER A STUDENT NAME." TO MSGO.                         
+      * ATTEMPT TO RECEIVE MAP FROM TERMINAL                                    
+           EXEC CICS RECEIVE                                                    
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MB')                                               
+           END-EXEC.                                                            
+                                                                                
+      * RECEIVE WAS SUCCESSFUL, PROCEED WITH MAIN PROCESSING                    
+           GO TO 200-MAIN-LOGIC.                                                
+                                                                                
+       200-MAIN-LOGIC.                                                          
+           IF TRANSTOL NOT EQUAL 0 AND TRANSTOI NOT EQUAL SPACES                
+               AND TRANSTOI NOT EQUAL LOW-VALUES THEN                           
+               GO TO 400-TRANSFER                                               
+           ELSE                                                                 
+               MOVE SPACES TO STU-NAME                                          
+               IF STUNAMEL >= 3 AND STUNAMEI NOT EQUAL SPACES                   
+                  AND STUNAMEI NOT NUMERIC THEN                                 
+                   MOVE STUNAMEI TO STU-NAME                                    
+                   MOVE 1 TO WS-GOOD-SEARCH                                     
+                   MOVE WS-FLAGS TO DFHCOMMAREA                                 
+                   PERFORM 211-NEXT-PAGE                                        
+               ELSE                                                             
+                   MOVE LOW-VALUES TO MAP1O                                     
+                   MOVE 0 TO WS-GOOD-SEARCH                                     
+                   MOVE "NAME MUST BE AT LEAST 3 LETTERS LONG." TO MSGO         
+                   EXEC CICS SEND                                               
+                       MAP('MAP1')                                              
+                       MAPSET('DCJA6MB')                                        
+                       ERASE                                                    
+                   END-EXEC                                                     
+                   EXEC CICS RETURN                                             
+                       TRANSID('JA64')                                          
+                       COMMAREA(WS-DATA)                                        
+                       LENGTH(485)                                              
+                   END-EXEC                                                     
+               END-IF                                                           
+           END-IF.                                                              
+                                                                                
+       210-FORWARD.                                                             
+           EXEC CICS READNEXT                                                   
+               FILE('STUNAME')                                                  
+               INTO(STUFILE-RECORD)                                             
+               LENGTH(STUFILE-LENGTH)                                           
+               RIDFLD(STU-NAME)                                                 
+               RESP(WS-STATUS)                                                  
+           END-EXEC.                                                            
+           IF (WS-STATUS = DFHRESP(ENDFILE))                                    
+               IF WS-EOF-FLAG NOT EQUAL 1 THEN                                  
+                   MOVE 1 TO WS-EOF-FLAG                                        
+                   MOVE 'END OF FILE REACHED' TO LINESO(WS-LINE-COUNT)          
+               ELSE                                                             
+                   MOVE SPACES TO LINESO(WS-LINE-COUNT)                         
+               END-IF                                                           
+           ELSE                                                                 
+               MOVE 0 TO WS-EOF-FLAG                                            
+               PERFORM 222-WRITE-LINE                                           
+           END-IF.                                                              
+                                                                                
+       211-NEXT-PAGE.                                                           
+           IF WS-GOOD-SEARCH EQUAL TO 1 THEN                                    
+               EXEC CICS STARTBR                                                
+                   FILE('STUNAME')                                              
+                   RIDFLD(STU-NAME)                                             
+               END-EXEC                                                         
+               PERFORM 210-FORWARD VARYING WS-LINE-COUNT FROM 1 BY 1            
+                                    UNTIL WS-LINE-COUNT > 10                    
+               EXEC CICS ENDBR                                                  
+                   FILE('STUNAME')                                              
+               END-EXEC                                                         
+               GO TO 999-BROWSE-RETURN                                          
+           ELSE                                                                 
+               GO TO 999-BROWSE-ERROR                                           
+           END-IF.                                                              
+                                                                                
+       220-PREVIOUS.                                                            
+           EXEC CICS READPREV                                                   
+               FILE('STUNAME')                                                  
+               INTO(STUFILE-RECORD)                                             
+               LENGTH(STUFILE-LENGTH)                                           
+               RIDFLD(STU-NAME)                                                 
+               RESP(WS-STATUS)                                                  
+           END-EXEC.                                                            
+           IF (WS-STATUS = DFHRESP(ENDFILE))                                    
+               IF WS-SOF-FLAG NOT EQUAL 1 THEN                                  
+                   MOVE 'BEGINNING OF FILE REACHED'                             
+                       TO LINESO(WS-LINE-COUNT)                                 
+               ELSE                                                             
+                   MOVE SPACES TO LINESO(WS-LINE-COUNT)                         
+               END-IF                                                           
+               MOVE 1 TO WS-SOF-FLAG                                            
+           ELSE                                                                 
+               MOVE 0 TO WS-SOF-FLAG                                            
+               PERFORM 222-WRITE-LINE                                           
+           END-IF.                                                              
+                                                                                
+       221-PREV-PAGE.                                                           
+           IF WS-GOOD-SEARCH EQUAL 1 THEN                                       
+               EXEC CICS STARTBR                                                
+                   FILE('STUNAME')                                              
+                   RIDFLD(STU-NAME)                                             
+               END-EXEC                                                         
+               PERFORM 220-PREVIOUS VARYING WS-LINE-COUNT FROM 10 BY -1         
+                                    UNTIL WS-LINE-COUNT < 1                     
+               EXEC CICS ENDBR                                                  
+                   FILE('STUNAME')                                              
+               END-EXEC                                                         
+               GO TO 999-BROWSE-RETURN                                          
+           ELSE                                                                 
+               GO TO 999-BROWSE-ERROR                                           
+           END-IF.                                                              
+                                                                                
+       222-WRITE-LINE.                                                          
+           MOVE SPACES TO WS-DATA-LINE(WS-LINE-COUNT).                          
+           MOVE WS-LINE-COUNT TO                                                
+               WDC-LINE OF WS-DATA-LINE(WS-LINE-COUNT).                         
+           MOVE STU-NUMBER TO WDC-NUM OF WS-DATA-LINE(WS-LINE-COUNT).           
+           MOVE STU-NAME TO WDC-NAME OF WS-DATA-LINE(WS-LINE-COUNT).            
+           STRING STU-PHONE-1, STU-PHONE-2, STU-PHONE-3                         
+               DELIMITED BY SPACE INTO                                          
+                   WDC-PHONE OF WS-DATA-LINE(WS-LINE-COUNT).                    
+           MOVE WS-DATA-LINE(WS-LINE-COUNT) TO LINESO(WS-LINE-COUNT).           
+                                                                                
+       300-NOTFND.                                                              
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE 'STUDENT NOT FOUND' TO MSGO.                                    
+           EXEC CICS SEND                                                       
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MB')                                               
+                ERASE                                                           
+           END-EXEC.                                                            
+           EXEC CICS RETURN                                                     
+                TRANSID('JA64')                                                 
+                COMMAREA(WS-DATA)                                               
+                LENGTH(485)                                                     
+           END-EXEC.                                                            
+                                                                                
+       400-TRANSFER.                                                            
+           IF WS-GOOD-SEARCH EQUAL TO 1 THEN                                    
+              INSPECT FUNCTION REVERSE(TRANSTOI)                                
+                  TALLYING WS-COUNT FOR ALL SPACES                              
+                  COMPUTE WS-COUNT =((LENGTH OF TRANSTOI) - WS-COUNT)           
+              IF WS-COUNT EQUAL 1 THEN                                          
+                   IF ((TRANSTOI(1:1) EQUAL SPACES                              
+                                                                                
+                       OR TRANSTOI(1:1) EQUAL LOW-VALUES)                       
+                       AND TRANSTOI(2:1) IS NUMERIC)                            
+                       MOVE TRANSTOI(2:1) TO WS-INDEX                           
+                   ELSE                                                         
+                       IF ((TRANSTOI(2:1) EQUAL SPACES                          
+                                                                                
+                           OR TRANSTOI(2:1) EQUAL LOW-VALUES)                   
+                           AND TRANSTOI(1:1) IS NUMERIC)                        
+                           MOVE TRANSTOI(1:1) TO WS-INDEX                       
+                       ELSE                                                     
+                           MOVE 'TRANS INDEX NOT NUMERIC'                       
+                             TO MSGO                                            
+                           EXEC CICS SEND                                       
+                               MAP('MAP1')                                      
+                               MAPSET('DCJA6MB')                                
+                               ERASE                                            
+                           END-EXEC                                             
+                           EXEC CICS RETURN                                     
+                               TRANSID('JA64')                                  
+                               COMMAREA(WS-DATA)                                
+                               LENGTH(485)                                      
+                           END-EXEC                                             
+                       END-IF                                                   
+                   END-IF                                                       
+                   IF WS-INDEX < 1 THEN                                         
+                       MOVE                                                     
+                       'TRANS INDEX MUST BE > 0                                 
+                       TO MSGO                                                  
+                       EXEC CICS SEND                                           
+                            MAP('MAP1')                                         
+                            MAPSET('DCJA6MB')                                   
+                            ERASE                                               
+                       END-EXEC                                                 
+                       EXEC CICS RETURN                                         
+                           TRANSID('JA64')                                      
+                           COMMAREA(WS-DATA)                                    
+                           LENGTH(485)                                          
+                       END-EXEC                                                 
+                   END-IF                                                       
+              END-IF                                                            
+              IF WS-COUNT EQUAL 2 THEN                                          
+                   IF TRANSTOI NOT NUMERIC THEN                                 
+                       MOVE 'TRANS INDEX NOT NUMERIC'                           
+                        TO MSGO                                                 
+                       EXEC CICS SEND                                           
+                            MAP('MAP1')                                         
+                            MAPSET('DCJA6MB')                                   
+                            ERASE                                               
+                       END-EXEC                                                 
+                       EXEC CICS RETURN                                         
+                           TRANSID('JA64')                                      
+                           COMMAREA(WS-DATA)                                    
+                           LENGTH(485)                                          
+                       END-EXEC                                                 
+                   ELSE                                                         
+                       MOVE TRANSTOI TO WS-INDEX                                
+                   END-IF                                                       
+                   IF TRANSTOI < 01 OR TRANSTOI > 10                            
+                       MOVE                                                     
+                       'TRANS INDEX MUST BE BETWEEN 1 AND 10'                   
+                       TO MSGO                                                  
+                       EXEC CICS SEND                                           
+                            MAP('MAP1')                                         
+                            MAPSET('DCJA6MB')                                   
+                            ERASE                                               
+                       END-EXEC                                                 
+                       EXEC CICS RETURN                                         
+                           TRANSID('JA64')                                      
+                           COMMAREA(WS-DATA)                                    
+                           LENGTH(485)                                          
+                       END-EXEC                                                 
+                   ELSE                                                         
+                       MOVE TRANSTOI TO WS-INDEX                                
+                   END-IF                                                       
+              END-IF                                                            
+                                                                                
+                                                                                
+                                                                                
+                   IF WDC-NUM OF WS-DATA-LINE(WS-INDEX) NOT EQUAL SPACES        
+             AND WDC-NUM OF WS-DATA-LINE(WS-INDEX) NOT EQUAL LOW-VALUES         
+                   AND WDC-NUM OF WS-DATA-LINE(WS-INDEX) IS NUMERIC THEN        
+                       EXEC CICS XCTL                                           
+                            PROGRAM('DCJA6PGU')                                 
+                            COMMAREA(WDC-NUM OF WS-DATA-LINE(WS-INDEX))         
+                            LENGTH(WS-COMM-LEN)                                 
+                       END-EXEC                                                 
+                   ELSE                                                         
+                       GO TO 999-TRANSFER-ERROR                                 
+                   END-IF                                                       
+                                                                                
+           ELSE                                                                 
+               GO TO 999-BROWSE-ERROR                                           
+           END-IF.                                                              
+                                                                                
+       999-SEARCH-RETURN.                                                       
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE 0 TO WS-GOOD-SEARCH.                                            
+           MOVE 'PLEASE ENTER A STUDENT NAME'                                   
+               TO MSGO.                                                         
+           EXEC CICS SEND                                                       
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MB')                                               
+                ERASE                                                           
+           END-EXEC.                                                            
+           EXEC CICS RETURN                                                     
+               TRANSID('JA64')                                                  
+               COMMAREA(WS-DATA)                                                
+               LENGTH(485)                                                      
+           END-EXEC.                                                            
+                                                                                
+       999-TRANSFER-ERROR.                                                      
+           MOVE 'ERROR IN DATA FOR REQUESTED LINE.' TO MSGO.                    
+           EXEC CICS SEND                                                       
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MB')                                               
+           END-EXEC.                                                            
+           EXEC CICS RETURN                                                     
+               TRANSID('JA64')                                                  
+               COMMAREA(WS-DATA)                                                
+               LENGTH(485)                                                      
+           END-EXEC.                                                            
+                                                                                
+       999-BROWSE-ERROR.                                                        
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE 0 TO WS-GOOD-SEARCH.                                            
+           MOVE 'PLEASE PERFORM SUCCESSFUL SEARCH BEFORE BROWSING'              
+               TO MSGO.                                                         
+           EXEC CICS SEND                                                       
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MB')                                               
+                ERASE                                                           
+           END-EXEC.                                                            
+           EXEC CICS RETURN                                                     
+               TRANSID('JA64')                                                  
+               COMMAREA(WS-DATA)                                                
+               LENGTH(485)                                                      
+           END-EXEC.                                                            
+                                                                                
+       999-BROWSE-RETURN.                                                       
+           MOVE LOW-VALUES TO MSGO.                                             
+           IF WS-SOF-FLAG EQUAL TO 1 THEN                                       
+               MOVE "YOU MAY NOT PROCEED FARTHER BACK IN FILE"                  
+                   TO MSGO                                                      
+           ELSE                                                                 
+               IF WS-EOF-FLAG EQUAL TO 1 THEN                                   
+                   MOVE "YOU MAY NOT PROCEED FARTHER IN FILE"                   
+                       TO MSGO                                                  
+               ELSE                                                             
+                   MOVE "BROWSE STUDENTS WITH PF KEYS LISTED BELOW"             
+                      TO MSGO                                                   
+           END-IF.                                                              
+           EXEC CICS SEND                                                       
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MB')                                               
+           END-EXEC.                                                            
+           EXEC CICS RETURN                                                     
+               TRANSID('JA64')                                                  
+               COMMAREA(WS-DATA)                                                
+               LENGTH(485)                                                      
+           END-EXEC.                                                            
+                                                                                
+       999-EXIT-RETURN.                                                         
+           EXEC CICS XCTL                                                       
+                PROGRAM('DCJA6PGM')                                             
+                COMMAREA(WS-COMMAREA)                                           
+                LENGTH(WS-COMMAREA-LEN)                                         
+           END-EXEC.                                                            
+       END PROGRAM DCJA6PGB.                                                    
+                                                                                

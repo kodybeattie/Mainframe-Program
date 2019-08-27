@@ -1,0 +1,152 @@
+       IDENTIFICATION DIVISION.                                                 
+       PROGRAM-ID. DCJA6PGR.                                                    
+       AUTHOR. KODY BEATTIE.                                                    
+                                                                                
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
+       DATA DIVISION.                                                           
+       WORKING-STORAGE SECTION.                                                 
+                                                                                
+      * COPY INQUIRY MAP LAYOUT                                                 
+       COPY 'DCJA6MR'.                                                          
+                                                                                
+      * COPY ACCTFILE RECORD LAYOUT                                             
+       COPY 'STUREC'.                                                           
+       01 WS-COMMAREA      PIC X VALUE 'X'.                                     
+       01 WS-COMMAREA-LEN  PIC S9(4) COMP VALUE 1.                              
+       LINKAGE SECTION.                                                         
+                                                                                
+       01 DFHCOMMAREA PIC X.                                                    
+                                                                                
+       PROCEDURE DIVISION.                                                      
+                                                                                
+       000-START-LOGIC.                                                         
+                                                                                
+                                                                                
+      * UPON UNSUCCESSFUL MAP RECEIVE, ASSUME THIS IS THE INITIAL RUN           
+      * TODO: ADD CONDITION FOR RECORD NOT FOUND IN STUFILE                     
+           EXEC CICS HANDLE CONDITION                                           
+                MAPFAIL(100-FIRST-TIME)                                         
+                NOTFND(300-NOTFND)                                              
+           END-EXEC.                                                            
+            EXEC CICS HANDLE AID                                                
+                PF4(100-FIRST-TIME)                                             
+                PF9(999-EXIT)                                                   
+            END-EXEC.                                                           
+           IF (EIBCALEN = 1) THEN                                               
+                GO TO 100-FIRST-TIME                                            
+           END-IF.                                                              
+                                                                                
+      * ATTEMPT TO RECEIVE MAP FROM TERMINAL                                    
+           EXEC CICS RECEIVE                                                    
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MR')                                               
+           END-EXEC.                                                            
+                                                                                
+      * RECEIVE WAS SUCCESSFUL, PROCEED WITH MAIN PROCESSING                    
+           GO TO 200-MAIN-LOGIC.                                                
+                                                                                
+       100-FIRST-TIME.                                                          
+                                                                                
+           MOVE LOW-VALUES TO MAP1O.                                            
+                                                                                
+           EXEC CICS SEND                                                       
+               MAP('MAP1')                                                      
+               MAPSET('DCJA6MR')                                                
+               ERASE                                                            
+           END-EXEC.                                                            
+                                                                                
+           EXEC CICS RETURN                                                     
+               TRANSID('JA61')                                                  
+           END-EXEC.                                                            
+                                                                                
+       200-MAIN-LOGIC.                                                          
+                                                                                
+      * TODO: IMPLEMENT VALIDATION LOGIC                                        
+           IF(STUNUMI = "XXXXXXX")                                              
+               GO TO 999-EXIT                                                   
+           END-IF.                                                              
+           IF STUNUML < 7 THEN                                                  
+               GO TO 349-STU-NUM-TO-SHORT                                       
+           END-IF.                                                              
+           IF STUNUMI IS NOT NUMERIC THEN                                       
+               GO TO 350-STU-NUM-NOT-NUMERIC                                    
+           END-IF.                                                              
+                                                                                
+      * TODO: ATTEMPT TO FIND STUDENT RECORD IN STUFILE                         
+      *       FROM USER INPUT STUDENT NUMBER                                    
+           MOVE STUNUMI TO STU-NUMBER.                                          
+           EXEC CICS READ                                                       
+               FILE('STUFILE')                                                  
+               INTO(STUFILE-RECORD)                                             
+               RIDFLD(STU-KEY)                                                  
+           END-EXEC.                                                            
+      * RECORD FOUND, MOVE VALUES TO MAP OUTPUTS                                
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE "RECORD FOUND!" TO MSGO.                                        
+                                                                                
+           MOVE STU-NUMBER TO STUNUMO.                                          
+           MOVE STU-NAME TO STUNAMEO.                                           
+           MOVE STU-COURSE-1 TO COURSE1O.                                       
+           MOVE STU-COURSE-2 TO COURSE2O.                                       
+           MOVE STU-COURSE-3 TO COURSE3O.                                       
+           MOVE STU-COURSE-4 TO COURSE4O.                                       
+           MOVE STU-COURSE-5 TO COURSE5O.                                       
+           MOVE STU-ADDRESS-1 TO ADDLINE1O.                                     
+           MOVE STU-ADDRESS-2 TO ADDLINE2O.                                     
+           MOVE STU-ADDRESS-3 TO ADDLINE3O.                                     
+           MOVE STU-POSTAL-1 TO POST1O.                                         
+           MOVE STU-POSTAL-2 TO POST2O.                                         
+           MOVE STU-PHONE-1 TO PHONE1O.                                         
+           MOVE STU-PHONE-2 TO PHONE2O.                                         
+           MOVE STU-PHONE-3 TO PHONE3O.                                         
+      * TODO: MOVE VALUES FROM STUREC TO O FIELDS                               
+                                                                                
+           EXEC CICS SEND                                                       
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MR')                                               
+                ERASE                                                           
+           END-EXEC.                                                            
+                                                                                
+           EXEC CICS RETURN                                                     
+                TRANSID('JA61')                                                 
+           END-EXEC.                                                            
+                                                                                
+       300-NOTFND.                                                              
+                                                                                
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE 'STUDENT NOT FOUND' TO MSGO.                                    
+                                                                                
+           EXEC CICS SEND                                                       
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MR')                                               
+                ERASE                                                           
+           END-EXEC.                                                            
+                                                                                
+           EXEC CICS RETURN                                                     
+                TRANSID('JA61')                                                 
+           END-EXEC.                                                            
+                                                                                
+       349-STU-NUM-TO-SHORT.                                                    
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE 'STUDENT NUMBER MUST BE 7 INTEGERS LONG. RE-ENTER'              
+               TO MSGO.                                                         
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MR') ERASE END-EXEC.         
+           EXEC CICS RETURN TRANSID('JA61') END-EXEC.                           
+                                                                                
+       350-STU-NUM-NOT-NUMERIC.                                                 
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE 'STUDENT NUMBER MUST BE NUMERIC. RE-ENTER' TO MSGO.             
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MR') ERASE END-EXEC.         
+           EXEC CICS RETURN TRANSID('JA61') END-EXEC.                           
+                                                                                
+       999-EXIT.                                                                
+           EXEC CICS XCTL                                                       
+                PROGRAM('DCJA6PGM')                                             
+                COMMAREA(WS-COMMAREA)                                           
+                LENGTH(WS-COMMAREA-LEN)                                         
+           END-EXEC.                                                            
+                                                                                
+                                                                                
+       END PROGRAM DCJA6PGR.                                                    
+                                                                                

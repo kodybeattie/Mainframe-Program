@@ -1,0 +1,37 @@
+      * USED TO PASS DATA BETWEEN PGC AND PGE PROGRAMS                          
+                                                                                
+       01 CHECK-LENGTH             PIC S9(4) COMP VALUE 207.                    
+                                                                                
+       01 CHECK-RECORD.                                                         
+          05 ERR-FIELD             PIC 9(2) VALUE 0.                            
+          05 ERR-MSG               PIC X(40).                                   
+          05 CHK-NUMBER            PIC X(7).                                    
+          05 CHK-NAME              PIC X(20).                                   
+          05 CHK-COURSE-1          PIC X(8).                                    
+          05 CHK-COURSE-2          PIC X(8).                                    
+          05 CHK-COURSE-3          PIC X(8).                                    
+          05 CHK-COURSE-4          PIC X(8).                                    
+          05 CHK-COURSE-5          PIC X(8).                                    
+          05 CHK-ADDRESS-1         PIC X(20).                                   
+          05 CHK-ADDRESS-2         PIC X(20).                                   
+          05 CHK-ADDRESS-3         PIC X(20).                                   
+          05 CHK-POSTAL-1          PIC X(3).                                    
+          05 CHK-POSTAL-2          PIC X(3).                                    
+          05 CHK-PHONE-1           PIC X(3).                                    
+          05 CHK-PHONE-2           PIC X(3).                                    
+          05 CHK-PHONE-3           PIC X(4).                                    
+          05 CHK-NUMBERL           PIC 9(2).                                    
+          05 CHK-NAMEL             PIC 9(2).                                    
+          05 CHK-COURSE-1L         PIC 9(1).                                    
+          05 CHK-COURSE-2L         PIC 9(1).                                    
+          05 CHK-COURSE-3L         PIC 9(1).                                    
+          05 CHK-COURSE-4L         PIC 9(1).                                    
+          05 CHK-COURSE-5L         PIC 9(1).                                    
+          05 CHK-ADDRESS-1L        PIC 9(2).                                    
+          05 CHK-ADDRESS-2L        PIC 9(2).                                    
+          05 CHK-POSTAL-1L         PIC 9(1).                                    
+          05 CHK-POSTAL-2L         PIC 9(1).                                    
+          05 CHK-PHONE-1L          PIC 9(1).                                    
+          05 CHK-PHONE-2L          PIC 9(1).                                    
+          05 CHK-PHONE-3L          PIC 9(1).                                    
+          05 FILLER                PIC X(4) VALUE SPACES.                       

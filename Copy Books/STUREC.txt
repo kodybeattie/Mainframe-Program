@@ -1,0 +1,23 @@
+      * STUFILE RECORD LAYOUT TO BE COPIED                                      
+                                                                                
+       01 STUFILE-LENGTH         PIC S9(4) COMP VALUE 150.                      
+                                                                                
+       01 STUFILE-RECORD.                                                       
+          05 STU-KEY.                                                           
+              10 STU-PREFIX          PIC X(3) VALUE 'JA6'.                      
+              10 STU-NUMBER          PIC X(7).                                  
+          05 STU-NAME              PIC X(20).                                   
+          05 STU-COURSE-1          PIC X(8).                                    
+          05 STU-COURSE-2          PIC X(8).                                    
+          05 STU-COURSE-3          PIC X(8).                                    
+          05 STU-COURSE-4          PIC X(8).                                    
+          05 STU-COURSE-5          PIC X(8).                                    
+          05 STU-ADDRESS-1         PIC X(20).                                   
+          05 STU-ADDRESS-2         PIC X(20).                                   
+          05 STU-ADDRESS-3         PIC X(20).                                   
+          05 STU-POSTAL-1          PIC X(3).                                    
+          05 STU-POSTAL-2          PIC X(3).                                    
+          05 STU-PHONE-1           PIC X(3).                                    
+          05 STU-PHONE-2           PIC X(3).                                    
+          05 STU-PHONE-3           PIC X(4).                                    
+          05 FILLER                PIC X(4) VALUE SPACES.                       

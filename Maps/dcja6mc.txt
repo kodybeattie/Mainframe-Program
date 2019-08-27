@@ -1,0 +1,99 @@
+*REPLACE XXX WITH THE LAST 3 CHARACTERS OF YOUR USER ID                         
+DCJA6MC  DFHMSD TYPE=&SYSPARM,MODE=INOUT,TERM=ALL,                     *        
+               LANG=COBOL,TIOAPFX=YES,CTRL=FREEKB,                     *        
+               MAPATTS=(COLOR,HILIGHT),DSATTS=(COLOR,HILIGHT)                   
+MAP1     DFHMDI SIZE=(24,80),LINE=1,COLUMN=1                                    
+         DFHMDF POS=(2,3),LENGTH=20,INITIAL='KODY',                    *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+         DFHMDF POS=(3,3),LENGTH=20,INITIAL='BEATTIE',                 *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+TITLE    DFHMDF POS=(2,26),LENGTH=28,                                  *        
+               INITIAL='E N T R Y        S C R E E N',                 *        
+               ATTRB=(ASKIP,NORM),COLOR=NEUTRAL                                 
+         DFHMDF POS=(3,26),LENGTH=28,                                  *        
+               INITIAL='============================',                 *        
+               ATTRB=(ASKIP,NORM),COLOR=NEUTRAL                                 
+         DFHMDF POS=(5,25),LENGTH=15,INITIAL='STUDENT NUMBER:',        *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+STUNUM   DFHMDF POS=(5,41),LENGTH=7,                                   *        
+               ATTRB=(UNPROT,NORM,IC,FSET),HILIGHT=OFF,COLOR=NEUTRAL            
+         DFHMDF POS=(5,49),LENGTH=0,                                   *        
+               ATTRB=ASKIP                                                      
+         DFHMDF POS=(7,27),LENGTH=13,INITIAL='COURSE CODES:',          *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+COURSE1  DFHMDF POS=(7,41),LENGTH=8,                                   *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(7,50),LENGTH=0,                                   *        
+               ATTRB=ASKIP                                                      
+COURSE2  DFHMDF POS=(8,41),LENGTH=8,                                   *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(8,50),LENGTH=0,                                   *        
+               ATTRB=ASKIP                                                      
+COURSE3  DFHMDF POS=(9,41),LENGTH=8,                                   *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(9,50),LENGTH=0,                                   *        
+               ATTRB=ASKIP                                                      
+COURSE4  DFHMDF POS=(10,41),LENGTH=8,                                  *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(10,50),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+COURSE5  DFHMDF POS=(11,41),LENGTH=8,                                  *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(11,50),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+         DFHMDF POS=(13,27),LENGTH=13,INITIAL='STUDENT NAME:',         *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+STUNAME  DFHMDF POS=(13,41),LENGTH=20,                                 *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(13,62),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+         DFHMDF POS=(15,32),LENGTH=8,INITIAL='ADDRESS:',               *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+ADDLINE1 DFHMDF POS=(15,41),LENGTH=20,                                 *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(15,62),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+ADDLINE2 DFHMDF POS=(16,41),LENGTH=20,                                 *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(16,62),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+ADDLINE3 DFHMDF POS=(17,41),LENGTH=20,                                 *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(17,62),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+         DFHMDF POS=(18,28),LENGTH=12,INITIAL='POSTAL CODE:',          *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+POST1    DFHMDF POS=(18,41),LENGTH=3,                                  *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(18,45),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+POST2    DFHMDF POS=(18,46),LENGTH=3,                                  *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(18,50),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+         DFHMDF POS=(20,34),LENGTH=6,INITIAL='PHONE:',                 *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+         DFHMDF POS=(20,41),LENGTH=1,INITIAL='(',                      *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+PHONE1   DFHMDF POS=(20,44),LENGTH=3,                                  *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(20,48),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+         DFHMDF POS=(20,49),LENGTH=1,INITIAL=')',                      *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+PHONE2   DFHMDF POS=(20,52),LENGTH=3,                                  *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(20,56),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+         DFHMDF POS=(20,57),LENGTH=1,INITIAL='-',                      *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+PHONE3   DFHMDF POS=(20,59),LENGTH=4,                                  *        
+               ATTRB=(UNPROT,NORM,FSET),HILIGHT=OFF,COLOR=NEUTRAL               
+         DFHMDF POS=(20,64),LENGTH=0,                                  *        
+               ATTRB=ASKIP                                                      
+MSG      DFHMDF POS=(22,19),LENGTH=50,                                 *        
+               ATTRB=(ASKIP,BRT),HILIGHT=OFF,COLOR=NEUTRAL                      
+         DFHMDF POS=(24,1),LENGTH=18,INITIAL='PF4-RESET PF9-EXIT',     *        
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=NEUTRAL                     
+DCJA6MC  DFHMSD TYPE=FINAL                                                      
+                 END                                                            

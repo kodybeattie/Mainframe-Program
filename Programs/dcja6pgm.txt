@@ -1,0 +1,135 @@
+       IDENTIFICATION DIVISION.                                                 
+       PROGRAM-ID. DCJA6PGM.                                                    
+       AUTHOR. KODY BEATTIE.                                                    
+                                                                                
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
+       DATA DIVISION.                                                           
+       WORKING-STORAGE SECTION.                                                 
+                                                                                
+       COPY 'DCJA6MM'.                                                          
+       01 WS-COMMAREA      PIC X VALUE 'X'.                                     
+       01 WS-COMMAREA-LEN  PIC S9(4) COMP VALUE 1.                              
+                                                                                
+       LINKAGE SECTION.                                                         
+                                                                                
+       01 DFHCOMMAREA PIC X.                                                    
+                                                                                
+       PROCEDURE DIVISION.                                                      
+       000-START-LOGIC.                                                         
+           IF (EIBCALEN = 1) THEN                                               
+                GO TO 100-FIRST-TIME                                            
+           END-IF.                                                              
+           EXEC CICS HANDLE CONDITION                                           
+                MAPFAIL(100-FIRST-TIME)                                         
+           END-EXEC.                                                            
+           EXEC CICS HANDLE AID                                                 
+                PF1(300-CHOICE-1)                                               
+                PF2(400-CHOICE-2)                                               
+                PF3(500-CHOICE-3)                                               
+                PF4(600-CHOICE-4)                                               
+                PF9(700-CHOICE-9)                                               
+           END-EXEC.                                                            
+           EXEC CICS RECEIVE                                                    
+                MAP('MAP1')                                                     
+                MAPSET('DCJA6MM')                                               
+           END-EXEC.                                                            
+           GO TO 200-MAIN-LOGIC.                                                
+                                                                                
+       100-FIRST-TIME.                                                          
+           MOVE LOW-VALUES TO MAP1O.                                            
+           EXEC CICS SEND                                                       
+               MAP('MAP1')                                                      
+               MAPSET('DCJA6MM')                                                
+               ERASE                                                            
+           END-EXEC.                                                            
+           EXEC CICS RETURN                                                     
+               TRANSID('JA60')                                                  
+           END-EXEC.                                                            
+                                                                                
+       200-MAIN-LOGIC.                                                          
+           IF CHOICEL = 0 THEN                                                  
+               GO TO 249-CHOICE-EMPTY                                           
+           ELSE                                                                 
+               IF CHOICEI IS NOT NUMERIC THEN                                   
+                   GO TO 250-CHOICE-NON-NUMERIC                                 
+               ELSE                                                             
+                   IF CHOICEI IS EQUAL TO '1' THEN                              
+                       GO TO 300-CHOICE-1                                       
+                   END-IF                                                       
+                   IF CHOICEI IS EQUAL TO '2' THEN                              
+                       GO TO 400-CHOICE-2                                       
+                   END-IF                                                       
+                   IF CHOICEI IS EQUAL TO '3' THEN                              
+                       GO TO 500-CHOICE-3                                       
+                   END-IF                                                       
+                   IF CHOICEI IS EQUAL TO '4' THEN                              
+                       GO TO 600-CHOICE-4                                       
+                   END-IF                                                       
+                   IF CHOICEI IS EQUAL TO '9' THEN                              
+                       GO TO 700-CHOICE-9                                       
+                   ELSE                                                         
+                       GO TO 800-SEND-ERROR-MSG                                 
+                   END-IF                                                       
+               END-IF                                                           
+           END-IF.                                                              
+                                                                                
+       249-CHOICE-EMPTY.                                                        
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE "CHOICE NOT ENTERED. PLEASE ENTER CHOICE FROM ABOVE"            
+               TO MSGO.                                                         
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MM') END-EXEC.               
+           EXEC CICS RETURN TRANSID('JA60') END-EXEC.                           
+                                                                                
+       250-CHOICE-NON-NUMERIC.                                                  
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE "CHOICE ENTERED NOT NUMERIC. ENTER CHOICE FROM ABOVE"           
+                TO MSGO.                                                        
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MM') END-EXEC.               
+           EXEC CICS RETURN TRANSID('JA60') END-EXEC.                           
+                                                                                
+       300-CHOICE-1.                                                            
+           EXEC CICS XCTL                                                       
+                PROGRAM('DCJA6PGC')                                             
+                COMMAREA(WS-COMMAREA)                                           
+                LENGTH(WS-COMMAREA-LEN)                                         
+           END-EXEC.                                                            
+                                                                                
+       400-CHOICE-2.                                                            
+           EXEC CICS XCTL                                                       
+                PROGRAM('DCJA6PGR')                                             
+                COMMAREA(WS-COMMAREA)                                           
+                LENGTH(WS-COMMAREA-LEN)                                         
+           END-EXEC.                                                            
+                                                                                
+       500-CHOICE-3.                                                            
+           EXEC CICS XCTL                                                       
+                PROGRAM('DCJA6PGU')                                             
+                COMMAREA(WS-COMMAREA)                                           
+                LENGTH(WS-COMMAREA-LEN)                                         
+           END-EXEC.                                                            
+                                                                                
+       600-CHOICE-4.                                                            
+           EXEC CICS XCTL                                                       
+                PROGRAM('DCJA6PGB')                                             
+                COMMAREA(WS-COMMAREA)                                           
+                LENGTH(WS-COMMAREA-LEN)                                         
+           END-EXEC.                                                            
+                                                                                
+       700-CHOICE-9.                                                            
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE 'YOU ENTERED 9 - PROGRAM ENDING' TO MSGO.                       
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MM') END-EXEC.               
+           GO TO 999-EXIT.                                                      
+                                                                                
+       800-SEND-ERROR-MSG.                                                      
+           MOVE LOW-VALUES TO MAP1O.                                            
+           MOVE 'INVALID COMMAND ENTERED' TO MSGO.                              
+           EXEC CICS SEND MAP('MAP1') MAPSET('DCJA6MM') END-EXEC.               
+           EXEC CICS RETURN TRANSID('JA60') END-EXEC.                           
+                                                                                
+       999-EXIT.                                                                
+           EXEC CICS SEND CONTROL ERASE FREEKB END-EXEC.                        
+           EXEC CICS RETURN END-EXEC.                                           
+                                                                                
+       END PROGRAM DCJA6PGM.                                                    

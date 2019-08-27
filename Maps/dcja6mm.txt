@@ -1,0 +1,31 @@
+*REPLACE XXX WITH THE LAST 3 CHARACTERS OF YOUR USER ID                         
+DCJA6MM  DFHMSD TYPE=&SYSPARM,MODE=INOUT,TERM=ALL,                     *        
+               LANG=COBOL,TIOAPFX=YES,CTRL=FREEKB,                     *        
+               MAPATTS=(COLOR,HILIGHT),DSATTS=(COLOR,HILIGHT)                   
+MAP1     DFHMDI SIZE=(24,80),LINE=1,COLUMN=1                                    
+TITLE    DFHMDF POS=(2,30),LENGTH=17,ATTRB=(ASKIP,BRT),                *        
+               INITIAL='M A I N   M E N U'                                      
+         DFHMDF POS=(3,30),LENGTH=17,ATTRB=(ASKIP,BRT),                *        
+               INITIAL='================='                                      
+         DFHMDF POS=(6,24),LENGTH=28,ATTRB=(ASKIP,BRT),                *        
+               INITIAL='CHOICE 1 - ENTER NEW STUDENT'                           
+         DFHMDF POS=(8,24),LENGTH=36,ATTRB=(ASKIP,BRT),                *        
+               INITIAL='CHOICE 2 - INQUIRE BY STUDENT NUMBER'                   
+         DFHMDF POS=(10,24),LENGTH=44,ATTRB=(ASKIP,BRT),               *        
+               INITIAL='CHOICE 3 - CHANGE OR DELETE EXISTING STUDENT'           
+         DFHMDF POS=(12,24),LENGTH=34,ATTRB=(ASKIP,BRT),               *        
+               INITIAL='CHOICE 4 - SEARCH BY STUDENT NAME'                      
+         DFHMDF POS=(14,24),LENGTH=27,ATTRB=(ASKIP,BRT),               *        
+               INITIAL='CHOICE 9 - EXIT THIS SCREEN'                            
+         DFHMDF POS=(17,29),LENGTH=23,                                 *        
+               INITIAL='ENTER YOUR CHOICE HERE:',                      *        
+               ATTRB=(ASKIP,BRT)                                                
+CHOICE   DFHMDF POS=(17,53),LENGTH=1,ATTRB=(FSET,UNPROT,IC)                     
+         DFHMDF POS=(17,55),LENGTH=0,ATTRB=ASKIP                                
+MSG      DFHMDF POS=(20,18),LENGTH=55,ATTRB=(ASKIP,BRT)                         
+FCNTRL   DFHMDF POS=(22,1),LENGTH=32,ATTRB=(ASKIP,BRT),                *        
+               INITIAL='PF1-ENTRY PF2-INQUIRY PF3-UPDATE'                       
+FCNTRL2  DFHMDF POS=(22,34),LENGTH=19,ATTRB=(ASKIP,BRT),               *        
+               INITIAL='PF4-SEARCH PF9-EXIT'                                    
+DCJA6MM  DFHMSD TYPE=FINAL                                                      
+                 END                                                            
